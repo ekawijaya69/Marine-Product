@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Monitoring Marine Product</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Inter & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Header / Navbar -->
+    <header class="bg-gradient-to-r from-blue-700 to-sky-600 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-3">
+                    <img src="Logo Danantara.png" alt="Logo Danantara" class="h-9 object-contain filter drop-shadow" onerror="this.onerror=null; this.src='Logo Danantara_3.png';">
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white">Marine Product Control</h1>
+                    <p class="text-xs text-sky-100">Sistem Monitoring & Rekapitulasi Produk Kelautan Perikanan</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+                <button onclick="openAddModal()" class="bg-amber-400 hover:bg-amber-500 text-slate-950 font-semibold px-4 py-2 rounded-xl text-sm transition flex items-center gap-2 shadow-md">
+                    <i class="fa-solid fa-plus"></i> Tambah Data Marine
+                </button>
+                <div class="flex items-center">
+                    <img src="Logo Pelindo.png" alt="Logo Pelindo" class="h-9 object-contain filter drop-shadow" onerror="this.onerror=null; this.src='Logo Pelindo_4.png';">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full space-y-6">
+
+        <!-- Notifikasi Toast -->
+        <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+            <div id="toastContent" class="bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 border border-slate-800">
+                <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400"></i>
+                <span id="toastMessage" class="text-sm font-medium">Berhasil menyimpan data!</span>
+            </div>
+        </div>
+
+        <!-- Statistik Ringkasan -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Shipment</p>
+                    <h3 id="statTotalShipment" class="text-2xl font-bold text-slate-900 mt-1">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-bold">
+                    <i class="fa-solid fa-fish-fins"></i>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Tonnage (Kg)</p>
+                    <h3 id="statTotalTonnage" class="text-2xl font-bold text-slate-900 mt-1">0 Kg</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold">
+                    <i class="fa-solid fa-weight-scale"></i>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Qty (Pcs)</p>
+                    <h3 id="statTotalQty" class="text-2xl font-bold text-slate-900 mt-1">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
+                    <i class="fa-solid fa-cubes"></i>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Komoditas Dominan</p>
+                    <h3 id="statTopCommodity" class="text-2xl font-bold text-slate-900 mt-1">-</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl font-bold">
+                    <i class="fa-solid fa-water"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter & Pencarian Bar -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row gap-4 justify-between items-center">
+            <div class="relative w-full lg:w-72">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </span>
+                <input type="text" id="searchInput" oninput="filterData()" placeholder="Cari Flight, Commodity, Station..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition">
+            </div>
+            <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
+                <div class="flex items-center gap-1.5">
+                    <label class="text-xs font-medium text-slate-500">Dari:</label>
+                    <input type="date" id="filterStartDate" onchange="filterData()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <label class="text-xs font-medium text-slate-500">Sampai:</label>
+                    <input type="date" id="filterEndDate" onchange="filterData()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+                <button onclick="resetFilters()" class="text-xs text-slate-600 hover:text-slate-900 font-medium px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
+                    Reset Filter
+                </button>
+                <button onclick="openPreviewModal()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-eye text-amber-400"></i> Preview
+                </button>
+            </div>
+        </div>
+
+        <!-- Tabel Data Utama -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-900 text-white text-xs uppercase tracking-wider font-semibold whitespace-nowrap">
+                            <th class="py-3.5 px-4 text-center">No.</th>
+                            <th class="py-3.5 px-4 text-left">Tanggal</th>
+                            <th class="py-3.5 px-4 text-left">Flight No.</th>
+                            <th class="py-3.5 px-4 text-left">Station</th>
+                            <th class="py-3.5 px-4 text-left">Route</th>
+                            <th class="py-3.5 px-4 text-left">Commodity</th>
+                            <th class="py-3.5 px-4 text-center">Qty (Pcs)</th>
+                            <th class="py-3.5 px-4 text-right">Tonnage (Kg)</th>
+                            <th class="py-3.5 px-4 text-left">Packaging</th>
+                            <th class="py-3.5 px-4 text-left">Condition</th>
+                            <th class="py-3.5 px-4 text-left">Leak Status</th>
+                            <th class="py-3.5 px-4 text-left">Status</th>
+                            <th class="py-3.5 px-4 text-left">Keterangan</th>
+                            <th class="py-3.5 px-4 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-100 text-sm text-slate-700">
+                        <!-- Data dimuat dinamis via JS -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden py-16 text-center">
+                <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto text-2xl mb-3">
+                    <i class="fa-solid fa-folder-open"></i>
+                </div>
+                <h4 class="text-base font-semibold text-slate-700">Tidak ada data ditemukan</h4>
+                <p class="text-xs text-slate-500 mt-1">Coba sesuaikan kata kunci pencarian atau tambahkan data baru.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Form (Tambah/Edit) -->
+    <div id="dataModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
+                <h3 id="modalTitle" class="text-lg font-bold">Tambah Data Marine Product</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white p-1 rounded-lg transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="marineForm" onsubmit="saveData(event)" class="p-6 overflow-y-auto space-y-4 flex-grow">
+                <input type="hidden" id="editIndex">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal *</label>
+                        <input type="date" id="inputTanggal" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Flight No. *</label>
+                        <input type="text" id="inputFlightNo" placeholder="Contoh: 778-05312134" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Station *</label>
+                        <input type="text" id="inputStation" placeholder="Contoh: CGK" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 uppercase">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Route *</label>
+                        <input type="text" id="inputRoute" placeholder="Contoh: IP-0112" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 uppercase">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Commodity *</label>
+                        <input type="text" id="inputCommodity" placeholder="Contoh: KERAPU / LOBSTER" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 uppercase">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Qty (Pcs) *</label>
+                        <input type="number" id="inputQty" min="1" placeholder="Contoh: 35" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Tonnage (Kg) *</label>
+                        <input type="number" id="inputTonnage" step="0.01" min="0.01" placeholder="Contoh: 819.00" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Packaging *</label>
+                        <select id="inputPackaging" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="-">-</option>
+                            <option value="Double Package">Double Package</option>
+                            <option value="Single Package">Single Package</option>
+                            <option value="Styrofoam Box">Styrofoam Box</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Condition *</label>
+                        <select id="inputCondition" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="-">-</option>
+                            <option value="Good Condition">Good Condition</option>
+                            <option value="Fair Condition">Fair Condition</option>
+                            <option value="Damaged">Damaged</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Leak Status *</label>
+                        <select id="inputLeakStatus" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="-">-</option>
+                            <option value="No Leak">No Leak</option>
+                            <option value="Minor Leak">Minor Leak</option>
+                            <option value="Leaking">Leaking</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Status *</label>
+                        <select id="inputStatus" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 font-semibold text-blue-700">
+                            <option value="-">-</option>
+                            <option value="Outgoing">Outgoing</option>
+                            <option value="Incoming">Incoming</option>
+                            <option value="Transit">Transit</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Keterangan</label>
+                    <input type="text" id="inputKeterangan" placeholder="Contoh: All Good condition" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-xl transition">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-sm rounded-xl shadow-md transition">Simpan Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Preview Laporan -->
+    <div id="previewModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-file-lines text-amber-400"></i> Pratinjau Laporan Monitoring Marine Product
+                    </h3>
+                    <p id="previewSubtitle" class="text-xs text-slate-400 mt-0.5">Berdasarkan rentang tanggal & pencarian aktif</p>
+                </div>
+                <button onclick="closePreviewModal()" class="text-slate-400 hover:text-white p-1 rounded-lg transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div id="printableArea" class="p-6 overflow-y-auto flex-grow space-y-4">
+                <div class="flex justify-between items-center border-b pb-4 mb-4">
+                    <div class="flex items-center space-x-3">
+                        <img src="Logo Danantara.png" alt="Danantara" class="h-9 object-contain" onerror="this.onerror=null; this.src='https://i.ibb.co.com/Ldfwk78n/Logo-Danantara.png';">
+                    </div>
+                    <div class="text-center">
+                        <h4 class="font-bold text-sm text-slate-800">LAPORAN MONITORING MARINE PRODUCT</h4>
+                        <p id="printHeaderSubtitle" class="text-xs text-slate-500"></p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <img src="Logo Pelindo.png" alt="Pelindo" class="h-9 object-contain" onerror="this.onerror=null; this.src='https://i.ibb.co.com/xtG5nHMr/Logo-Pelindo.png';">
+                    </div>
+                </div>
+                <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 uppercase font-bold whitespace-nowrap">
+                                <th class="py-3 px-3 border-b text-center">No.</th>
+                                <th class="py-3 px-3 border-b">Tanggal</th>
+                                <th class="py-3 px-3 border-b">Flight No.</th>
+                                <th class="py-3 px-3 border-b">Station</th>
+                                <th class="py-3 px-3 border-b">Route</th>
+                                <th class="py-3 px-3 border-b">Commodity</th>
+                                <th class="py-3 px-3 border-b text-center">Qty</th>
+                                <th class="py-3 px-3 border-b text-right">Tonnage (Kg)</th>
+                                <th class="py-3 px-3 border-b">Packaging</th>
+                                <th class="py-3 px-3 border-b">Condition</th>
+                                <th class="py-3 px-3 border-b">Leak Status</th>
+                                <th class="py-3 px-3 border-b">Status</th>
+                                <th class="py-3 px-3 border-b">Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewTableBody" class="divide-y divide-slate-100 text-slate-700">
+                            <!-- Diisi via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+                <span id="previewRecordCount" class="text-xs font-medium text-slate-500">Menampilkan 0 data</span>
+                <div class="flex gap-2">
+                    <button onclick="closePreviewModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-xl transition">Tutup</button>
+                    <button onclick="exportToExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-file-excel"></i> Ekspor Excel (.xls)
+                    </button>
+                    <button onclick="printReportDirectly()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-print"></i> Cetak / Print
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-12 py-6 text-center text-xs text-slate-500">
+        <p>&copy; 2026 Marine Product Monitoring System. All Rights Reserved.</p>
+    </footer>
+
+    <!-- JavaScript Aplikasi -->
+    <script>
+        let marineData = [];
+
+        function loadData() {
+            const savedData = localStorage.getItem('marine_product_data_v2');
+            if (savedData) {
+                try {
+                    marineData = JSON.parse(savedData);
+                } catch (e) {
+                    marineData = getDefaultData();
+                }
+            } else {
+                marineData = getDefaultData();
+                saveDataToStorage();
+            }
+        }
+
+        function getDefaultData() {
+            return [
+                {
+                    tanggal: "2026-11-12",
+                    flightNo: "778-05312134",
+                    station: "CGK",
+                    route: "IP-0112",
+                    commodity: "KERAPU",
+                    qty: 35,
+                    tonnage: 819.00,
+                    packaging: "Double Package",
+                    condition: "Good Condition",
+                    leakStatus: "No Leak",
+                    status: "Outgoing",
+                    keterangan: "All Good condition"
+                },
+                {
+                    tanggal: "2026-11-12",
+                    flightNo: "778-05312160",
+                    station: "BPN",
+                    route: "IP-0603",
+                    commodity: "KERAPU",
+                    qty: 15,
+                    tonnage: 270.00,
+                    packaging: "Single Package",
+                    condition: "Good Condition",
+                    leakStatus: "No Leak",
+                    status: "Incoming",
+                    keterangan: "All Good condition"
+                },
+                {
+                    tanggal: "2026-10-02",
+                    flightNo: "IP-354",
+                    station: "CGK",
+                    route: "CGK-PDG",
+                    commodity: "BENUR",
+                    qty: 46,
+                    tonnage: 964.00,
+                    packaging: "Double Package",
+                    condition: "Good Condition",
+                    leakStatus: "No Leak",
+                    status: "Transit",
+                    keterangan: "Aman terkendali"
+                }
+            ];
+        }
+
+        function saveDataToStorage() {
+            localStorage.setItem('marine_product_data_v2', JSON.stringify(marineData));
+        }
+
+        window.onload = function() {
+            loadData();
+
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();
+            
+            document.getElementById("filterStartDate").value = `${year}-${month}-01`;
+            document.getElementById("filterEndDate").value = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+
+            renderTable(marineData);
+            updateStatistics(marineData);
+        };
+
+        function renderTable(data) {
+            const tbody = document.getElementById("tableBody");
+            const emptyState = document.getElementById("emptyState");
+            tbody.innerHTML = "";
+
+            if (data.length === 0) {
+                emptyState.classList.remove("hidden");
+                return;
+            } else {
+                emptyState.classList.add("hidden");
+            }
+
+            data.forEach((item, index) => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100 whitespace-nowrap";
+                
+                let leakBadge = "bg-emerald-100 text-emerald-800";
+                if(item.leakStatus && item.leakStatus.toLowerCase().includes("leak") && !item.leakStatus.toLowerCase().includes("no")) {
+                    leakBadge = "bg-rose-100 text-rose-800";
+                }
+
+                let statusBadge = "bg-blue-100 text-blue-800";
+                if(item.status === "Incoming") statusBadge = "bg-purple-100 text-purple-800";
+                else if(item.status === "Transit") statusBadge = "bg-amber-100 text-amber-800";
+
+                let formattedDate = item.tanggal;
+                if (item.tanggal && item.tanggal.includes('-')) {
+                    const parts = item.tanggal.split('-');
+                    if (parts.length === 3) {
+                        formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    }
+                }
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-center font-bold text-slate-500">${index + 1}</td>
+                    <td class="py-3 px-4 font-medium text-slate-900">${formattedDate}</td>
+                    <td class="py-3 px-4 font-semibold text-slate-700">${escapeHtml(item.flightNo)}</td>
+                    <td class="py-3 px-4 font-mono font-bold text-blue-600">${escapeHtml(item.station)}</td>
+                    <td class="py-3 px-4 font-mono text-xs text-slate-700">${escapeHtml(item.route)}</td>
+                    <td class="py-3 px-4 font-bold text-slate-900">${escapeHtml(item.commodity)}</td>
+                    <td class="py-3 px-4 text-center font-medium">${item.qty}</td>
+                    <td class="py-3 px-4 text-right font-medium">${Number(item.tonnage).toLocaleString('id-ID', {minimumFractionDigits: 2})} Kg</td>
+                    <td class="py-3 px-4 text-slate-600">${escapeHtml(item.packaging)}</td>
+                    <td class="py-3 px-4 text-slate-600">${escapeHtml(item.condition)}</td>
+                    <td class="py-3 px-4"><span class="${leakBadge} text-xs px-2.5 py-1 rounded-full font-semibold">${escapeHtml(item.leakStatus)}</span></td>
+                    <td class="py-3 px-4"><span class="${statusBadge} text-xs px-2.5 py-1 rounded-full font-semibold">${escapeHtml(item.status || 'Outgoing')}</span></td>
+                    <td class="py-3 px-4 text-slate-500 italic text-xs max-w-xs truncate" title="${escapeHtml(item.keterangan)}">${escapeHtml(item.keterangan || '-')}</td>
+                    <td class="py-3 px-4 text-center">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="editData(${index})" title="Edit" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
+                            <button onclick="deleteData(${index})" title="Hapus" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateStatistics(data) {
+            const totalShipment = data.length;
+            const totalTonnage = data.reduce((sum, item) => sum + Number(item.tonnage), 0);
+            const totalQty = data.reduce((sum, item) => sum + Number(item.qty), 0);
+
+            let commCounts = {};
+            data.forEach(item => {
+                commCounts[item.commodity] = (commCounts[item.commodity] || 0) + 1;
+            });
+            let topCommodity = "-";
+            let maxCount = 0;
+            for (let comm in commCounts) {
+                if (commCounts[comm] > maxCount) {
+                    maxCount = commCounts[comm];
+                    topCommodity = comm;
+                }
+            }
+
+            document.getElementById("statTotalShipment").innerText = totalShipment;
+            document.getElementById("statTotalTonnage").innerText = totalTonnage.toLocaleString('id-ID', {minimumFractionDigits: 2}) + " Kg";
+            document.getElementById("statTotalQty").innerText = totalQty.toLocaleString('id-ID');
+            document.getElementById("statTopCommodity").innerText = topCommodity;
+        }
+
+        function filterData() {
+            const query = document.getElementById("searchInput").value.toLowerCase();
+            const startDate = document.getElementById("filterStartDate").value;
+            const endDate = document.getElementById("filterEndDate").value;
+
+            const filtered = marineData.filter(item => {
+                const matchQuery = item.flightNo.toLowerCase().includes(query) ||
+                                   item.commodity.toLowerCase().includes(query) ||
+                                   item.station.toLowerCase().includes(query) ||
+                                   item.route.toLowerCase().includes(query) ||
+                                   item.status.toLowerCase().includes(query) ||
+                                   item.keterangan.toLowerCase().includes(query);
+                
+                let matchDate = true;
+                if (startDate && endDate) {
+                    matchDate = item.tanggal >= startDate && item.tanggal <= endDate;
+                } else if (startDate) {
+                    matchDate = item.tanggal >= startDate;
+                } else if (endDate) {
+                    matchDate = item.tanggal <= endDate;
+                }
+
+                return matchQuery && matchDate;
+            });
+
+            renderTable(filtered);
+        }
+
+        function resetFilters() {
+            document.getElementById("searchInput").value = "";
+            document.getElementById("filterStartDate").value = "";
+            document.getElementById("filterEndDate").value = "";
+            renderTable(marineData);
+        }
+
+        function openAddModal() {
+            document.getElementById("modalTitle").innerText = "Tambah Data Marine Product";
+            document.getElementById("marineForm").reset();
+            document.getElementById("editIndex").value = "";
+            document.getElementById("inputTanggal").valueAsDate = new Date();
+            document.getElementById("dataModal").classList.remove("hidden");
+        }
+
+        function closeModal() {
+            document.getElementById("dataModal").classList.add("hidden");
+        }
+
+        function editData(index) {
+            const item = marineData[index];
+            document.getElementById("modalTitle").innerText = "Edit Data Marine Product";
+            document.getElementById("editIndex").value = index;
+            document.getElementById("inputTanggal").value = item.tanggal;
+            document.getElementById("inputFlightNo").value = item.flightNo;
+            document.getElementById("inputStation").value = item.station;
+            document.getElementById("inputRoute").value = item.route;
+            document.getElementById("inputCommodity").value = item.commodity;
+            document.getElementById("inputQty").value = item.qty;
+            document.getElementById("inputTonnage").value = item.tonnage;
+            document.getElementById("inputPackaging").value = item.packaging;
+            document.getElementById("inputCondition").value = item.condition;
+            document.getElementById("inputLeakStatus").value = item.leakStatus;
+            document.getElementById("inputStatus").value = item.status || "Outgoing";
+            document.getElementById("inputKeterangan").value = item.keterangan;
+
+            document.getElementById("dataModal").classList.remove("hidden");
+        }
+
+        function saveData(event) {
+            event.preventDefault();
+            const editIndex = document.getElementById("editIndex").value;
+
+            const newItem = {
+                tanggal: document.getElementById("inputTanggal").value,
+                flightNo: document.getElementById("inputFlightNo").value.trim(),
+                station: document.getElementById("inputStation").value.trim().toUpperCase(),
+                route: document.getElementById("inputRoute").value.trim().toUpperCase(),
+                commodity: document.getElementById("inputCommodity").value.trim().toUpperCase(),
+                qty: parseInt(document.getElementById("inputQty").value),
+                tonnage: parseFloat(document.getElementById("inputTonnage").value),
+                packaging: document.getElementById("inputPackaging").value,
+                condition: document.getElementById("inputCondition").value,
+                leakStatus: document.getElementById("inputLeakStatus").value,
+                status: document.getElementById("inputStatus").value,
+                keterangan: document.getElementById("inputKeterangan").value.trim()
+            };
+
+            if (editIndex === "") {
+                marineData.unshift(newItem);
+                showToast("Data Marine Product berhasil ditambahkan!");
+            } else {
+                marineData[editIndex] = newItem;
+                showToast("Data Marine Product berhasil diperbarui!");
+            }
+
+            saveDataToStorage();
+            closeModal();
+            renderTable(marineData);
+            updateStatistics(marineData);
+        }
+
+        function deleteData(index) {
+            if (confirm("Apakah Anda yakin ingin menghapus data marine product ini?")) {
+                marineData.splice(index, 1);
+                saveDataToStorage();
+                renderTable(marineData);
+                updateStatistics(marineData);
+                showToast("Data berhasil dihapus!", "fa-circle-xmark", "text-rose-400");
+            }
+        }
+
+        function openPreviewModal() {
+            const startDate = document.getElementById("filterStartDate").value;
+            const endDate = document.getElementById("filterEndDate").value;
+            const query = document.getElementById("searchInput").value.toLowerCase();
+
+            const filteredData = marineData.filter(item => {
+                const matchQuery = item.flightNo.toLowerCase().includes(query) ||
+                                   item.commodity.toLowerCase().includes(query) ||
+                                   item.station.toLowerCase().includes(query) ||
+                                   item.route.toLowerCase().includes(query) ||
+                                   item.status.toLowerCase().includes(query);
+                
+                let matchDate = true;
+                if (startDate && endDate) {
+                    matchDate = item.tanggal >= startDate && item.tanggal <= endDate;
+                } else if (startDate) {
+                    matchDate = item.tanggal >= startDate;
+                } else if (endDate) {
+                    matchDate = item.tanggal <= endDate;
+                }
+                return matchQuery && matchDate;
+            });
+
+            const tbody = document.getElementById("previewTableBody");
+            tbody.innerHTML = "";
+
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="13" class="py-8 text-center text-slate-400">Tidak ada data untuk dipratinjau dalam rentang ini.</td></tr>`;
+            } else {
+                filteredData.forEach((item, idx) => {
+                    let formattedDate = item.tanggal;
+                    if (item.tanggal && item.tanggal.includes('-')) {
+                        const parts = item.tanggal.split('-');
+                        if (parts.length === 3) {
+                            formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                        }
+                    }
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50 whitespace-nowrap">
+                            <td class="py-2.5 px-3 text-center font-bold">${idx + 1}</td>
+                            <td class="py-2.5 px-3 font-medium text-slate-900">${formattedDate}</td>
+                            <td class="py-2.5 px-3 font-semibold">${escapeHtml(item.flightNo)}</td>
+                            <td class="py-2.5 px-3 font-mono font-bold">${escapeHtml(item.station)}</td>
+                            <td class="py-2.5 px-3 font-mono">${escapeHtml(item.route)}</td>
+                            <td class="py-2.5 px-3 font-bold">${escapeHtml(item.commodity)}</td>
+                            <td class="py-2.5 px-3 text-center">${item.qty}</td>
+                            <td class="py-2.5 px-3 text-right">${Number(item.tonnage).toLocaleString('id-ID', {minimumFractionDigits: 2})} Kg</td>
+                            <td class="py-2.5 px-3">${escapeHtml(item.packaging)}</td>
+                            <td class="py-2.5 px-3">${escapeHtml(item.condition)}</td>
+                            <td class="py-2.5 px-3">${escapeHtml(item.leakStatus)}</td>
+                            <td class="py-2.5 px-3 font-semibold">${escapeHtml(item.status || 'Outgoing')}</td>
+                            <td class="py-2.5 px-3">${escapeHtml(item.keterangan || '-')}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            let formattedStart = startDate;
+            let formattedEnd = endDate;
+            if (startDate && startDate.includes('-')) {
+                const p = startDate.split('-');
+                if(p.length === 3) formattedStart = `${p[2]}-${p[1]}-${p[0]}`;
+            }
+            if (endDate && endDate.includes('-')) {
+                const p = endDate.split('-');
+                if(p.length === 3) formattedEnd = `${p[2]}-${p[1]}-${p[0]}`;
+            }
+
+            const subtitleText = startDate && endDate ? `Periode: ${formattedStart} s.d. ${formattedEnd}` : `Semua Periode Aktif`;
+            document.getElementById("previewSubtitle").innerText = subtitleText;
+            document.getElementById("printHeaderSubtitle").innerText = subtitleText;
+            document.getElementById("previewRecordCount").innerText = `Menampilkan ${filteredData.length} data rekap`;
+            document.getElementById("previewModal").classList.remove("hidden");
+        }
+
+        function closePreviewModal() {
+            document.getElementById("previewModal").classList.add("hidden");
+        }
+
+        function printReportDirectly() {
+            const printContents = document.getElementById("printableArea").innerHTML;
+            const printWindow = window.open('', '_blank', 'height=700,width=900');
+            printWindow.document.write('<html><head><title>Cetak Laporan Marine Product</title>');
+            printWindow.document.write('<script src="https://cdn.tailwindcss.com"><\/script>');
+            printWindow.document.write('<style>body { font-family: Inter, sans-serif; padding: 20px; color: #1e293b; }</style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write(printContents);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.focus();
+
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 600);
+        }
+
+        function konversiGambarKeBase64(url) {
+            return new Promise((resolve) => {
+                if (!url || url.startsWith('data:image')) {
+                    resolve(url || '');
+                    return;
+                }
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.onload = function () {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 80;
+                    canvas.height = 40;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.8));
+                };
+                img.onerror = function () { resolve(url); };
+                img.src = url;
+            });
+        }
+
+        async function exportToExcel() {
+            const startDate = document.getElementById("filterStartDate").value;
+            const endDate = document.getElementById("filterEndDate").value;
+
+            const dataToExport = marineData.filter(item => {
+                if (!startDate && !endDate) return true;
+                let matchDate = true;
+                if (startDate && endDate) {
+                    matchDate = item.tanggal >= startDate && item.tanggal <= endDate;
+                } else if (startDate) {
+                    matchDate = item.tanggal >= startDate;
+                } else if (endDate) {
+                    matchDate = item.tanggal <= endDate;
+                }
+                return matchDate;
+            });
+
+            let formattedStart = startDate;
+            let formattedEnd = endDate;
+            if (startDate && startDate.includes('-')) {
+                const p = startDate.split('-');
+                if(p.length === 3) formattedStart = `${p[2]}-${p[1]}-${p[0]}`;
+            }
+            if (endDate && endDate.includes('-')) {
+                const p = endDate.split('-');
+                if(p.length === 3) formattedEnd = `${p[2]}-${p[1]}-${p[0]}`;
+            }
+
+            let periodText = startDate && endDate ? `Periode: ${formattedStart} s.d. ${formattedEnd}` : `Semua Periode`;
+
+            let tbodyRows = "";
+            dataToExport.forEach((row, idx) => {
+                let rowDate = row.tanggal;
+                if (row.tanggal && row.tanggal.includes('-')) {
+                    const p = row.tanggal.split('-');
+                    if(p.length === 3) rowDate = `${p[2]}-${p[1]}-${p[0]}`;
+                }
+
+                tbodyRows += `
+                    <tr>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1; text-align: center;">${idx + 1}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1; mso-number-format:'\@';">${escapeHtml(rowDate)}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${escapeHtml(row.flightNo)}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1; text-align: center;">${escapeHtml(row.station)}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${escapeHtml(row.route)}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${escapeHtml(row.commodity)}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1; text-align: center;">${row.qty}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1; text-align: right;">${Number(row.tonnage).toLocaleString('id-ID', {minimumFractionDigits: 2})} Kg</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${escapeHtml(row.packaging)}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${escapeHtml(row.condition)}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${escapeHtml(row.leakStatus)}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1; font-weight: bold; color: #2563eb;">${escapeHtml(row.status || 'Outgoing')}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${escapeHtml(row.keterangan || '-')}</td>
+                    </tr>
+                `;
+            });
+
+            if (dataToExport.length === 0) {
+                tbodyRows = `<tr><td colspan="13" style="padding: 15px; text-align: center; color: #64748b; border: 1px solid #cbd5e1;">Tidak ada data untuk periode ini.</td></tr>`;
+            }
+
+            const danantaraBase64 = await konversiGambarKeBase64("https://i.ibb.co.com/Ldfwk78n/Logo-Danantara.png");
+            const pelindoBase64 = await konversiGambarKeBase64("https://i.ibb.co.com/xtG5nHMr/Logo-Pelindo.png");
+
+            const tableHTML = `
+                <table border="1" style="border-collapse: collapse; font-family: Calibri, sans-serif; font-size: 11pt; width: 100%;">
+                    <thead>
+                        <tr style="height: 65px;">
+                            <th colspan="3" style="text-align: left; vertical-align: middle; border: none; padding: 5px; background: #ffffff;">
+                                <img src="${danantaraBase64}" width="120" height="40" alt="Danantara">
+                            </th>
+                            <th colspan="7" style="text-align: center; vertical-align: middle; font-size: 12pt; font-weight: bold; border: none; background: #ffffff; color: #0f172a;">
+                                MONITORING MARINE PRODUCT<br>
+                                <span style="font-size: 9pt; font-weight: normal; color: #475569;">${periodText} | Dicetak: ${new Date().toLocaleString('id-ID')}</span>
+                            </th>
+                            <th colspan="3" style="text-align: right; vertical-align: middle; border: none; padding: 5px; background: #ffffff;">
+                                <img src="${pelindoBase64}" width="120" height="40" alt="Pelindo">
+                            </th>
+                        </tr>
+                        <tr style="height: 10px; border: none;"><th colspan="13" style="border: none;"></th></tr>
+
+                        <tr style="background-color: #0f172a; color: #ffffff; font-weight: bold; text-align: left; vertical-align: middle;">
+                            <th style="width: 40px; padding: 8px; border: 1px solid #1e293b; text-align: center;">No.</th>
+                            <th style="width: 80px; padding: 8px; border: 1px solid #1e293b;">Tanggal</th>
+                            <th style="width: 140px; padding: 8px; border: 1px solid #1e293b;">Flight No.</th>
+                            <th style="width: 70px; padding: 8px; border: 1px solid #1e293b; text-align: center;">Station</th>
+                            <th style="width: 90px; padding: 8px; border: 1px solid #1e293b;">Route</th>
+                            <th style="width: 130px; padding: 8px; border: 1px solid #1e293b;">Commodity</th>
+                            <th style="width: 60px; padding: 8px; border: 1px solid #1e293b; text-align: center;">Qty</th>
+                            <th style="width: 100px; padding: 8px; border: 1px solid #1e293b; text-align: right;">Tonnage (Kg)</th>
+                            <th style="width: 120px; padding: 8px; border: 1px solid #1e293b;">Packaging</th>
+                            <th style="width: 110px; padding: 8px; border: 1px solid #1e293b;">Condition</th>
+                            <th style="width: 90px; padding: 8px; border: 1px solid #1e293b;">Leak Status</th>
+                            <th style="width: 90px; padding: 8px; border: 1px solid #1e293b;">Status</th>
+                            <th style="width: 130px; padding: 8px; border: 1px solid #1e293b;">Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tbodyRows}
+                    </tbody>
+                </table>
+            `;
+
+            const excelTemplate = `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" 
+                      xmlns:x="urn:schemas-microsoft-com:office:excel" 
+                      xmlns="http://www.w3.org/TR/REC-html40">
+                <head>
+                    <meta charset="UTF-8">
+                    <!--[if gte mso 9]>
+                    <xml>
+                        <x:ExcelWorkbook>
+                            <x:ExcelWorksheets>
+                                <x:ExcelWorksheet>
+                                    <x:Name>Marine Product</x:Name>
+                                    <x:WorksheetOptions>
+                                        <x:DisplayGridlines/>
+                                    </x:WorksheetOptions>
+                                </x:ExcelWorksheet>
+                            </x:ExcelWorksheets>
+                        </x:ExcelWorkbook>
+                    </xml>
+                    <![endif]-->
+                </head>
+                <body>
+                    ${tableHTML}
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob(['\ufeff', excelTemplate], { type: 'application/vnd.ms-excel' });
+            const url = URL.createObjectURL(blob);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = url;
+            downloadLink.download = `monitoring_marine_product_${startDate || 'all'}_to_${endDate || 'all'}.xls`;
+            
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(url);
+            showToast("Laporan Excel (.xls) Marine Product berhasil diunduh!");
+        }
+
+        function showToast(message, iconClass = "fa-circle-check", iconColor = "text-emerald-400") {
+            const toast = document.getElementById("toast");
+            const toastMessage = document.getElementById("toastMessage");
+            const toastIcon = document.getElementById("toastIcon");
+
+            toastMessage.innerText = message;
+            toastIcon.className = `fa-solid ${iconClass} ${iconColor}`;
+
+            toast.classList.remove("translate-y-20", "opacity-0", "pointer-events-none");
+            setTimeout(() => {
+                toast.classList.add("translate-y-20", "opacity-0", "pointer-events-none");
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/"/g, "&quot;")
+                      .replace(/'/g, '&#039;');
+        }
+    </script>
+</body>
+</html>
